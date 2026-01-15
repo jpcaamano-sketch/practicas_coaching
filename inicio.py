@@ -1,23 +1,19 @@
 import streamlit as st
 
-# --- 1. CONFIGURACIÓN INICIAL (Modificada) ---
-# initial_sidebar_state="expanded" fuerza a que arranque abierta.
+# --- 1. CONFIGURACIÓN INICIAL ---
 st.set_page_config(
     page_title="Herramientas de Coaching", 
     layout="centered", 
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded"  # Intenta forzar la apertura al inicio
 )
 
-# --- 2. PERSONALIZACIÓN BARRA LATERAL (Nuevo) ---
-# Esto coloca el Título y tu Nombre en la parte superior de la barra
+# --- 2. PERSONALIZACIÓN BARRA LATERAL ---
 with st.sidebar:
     st.title("Prácticas de Coaching")
     st.caption("Desarrollado por Juan Pablo Caamaño Valdés")
-    st.divider() # Una línea separadora elegante
+    st.divider()
 
 # --- 3. DEFINICIÓN DE TUS HERRAMIENTAS ---
-# Rutas a tus archivos en la carpeta apps
-
 # Comunicación
 p_correos = st.Page("apps/2.1_Correos.py", title="Correos Diplomáticos", icon="🗣️")
 p_pedidos = st.Page("apps/2.2_Pedidos.py", title="Pedidos Impecables", icon="🛡️")
@@ -40,27 +36,28 @@ pg = st.navigation({
     "NEGOCIACIÓN": [p_negociador]
 })
 
-# --- 5. ESTILOS LIMPIOS (CSS Global + Bloqueo de Barra) ---
+# --- 5. ESTILOS (CORREGIDOS PARA QUE APAREZCA EL MENÚ) ---
 st.markdown("""
     <style>
-    /* 1. Ocultar elementos innecesarios del sistema */
+    /* 1. Ocultar menú de los 3 puntos y pie de página */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header[data-testid="stHeader"] {visibility: hidden;}
-
-    /* 2. BLOQUEAR LA BARRA LATERAL (Truco CSS) */
-    /* Esto oculta la flecha "X" para cerrar la barra, haciéndola fija */
+    
+    /* 2. ELIMINAMOS LA ORDEN DE OCULTAR EL HEADER COMPLETO 
+       (Esto permite que veas la flecha '>' si el menú se cierra) */
+    
+    /* 3. BLOQUEAR EL BOTÓN DE CERRAR (La 'X' dentro del menú) */
     [data-testid="stSidebarCollapseButton"] {
         display: none;
     }
 
-    /* 3. Alinear todas las páginas arriba */
+    /* 4. Alinear contenido */
     .block-container {
         padding-top: 2rem !important;
         padding-bottom: 2rem !important;
     }
 
-    /* 4. Estilo de los títulos de categorías en el menú */
+    /* 5. Títulos del menú siempre visibles */
     div[data-testid="stSidebarNav"] span {
         visibility: visible !important;
         font-size: 14px;
@@ -70,5 +67,5 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 6. EJECUTAR LA APP SELECCIONADA ---
+# --- 6. EJECUTAR ---
 pg.run()
