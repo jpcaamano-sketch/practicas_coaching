@@ -4,13 +4,13 @@ import streamlit as st
 st.set_page_config(
     page_title="Herramientas de Coaching", 
     layout="centered", 
-    initial_sidebar_state="expanded"  # Intenta forzar la apertura al inicio
+    initial_sidebar_state="expanded" 
 )
 
 # --- 2. PERSONALIZACIÓN BARRA LATERAL ---
 with st.sidebar:
     st.title("Prácticas de Coaching")
-    st.caption("Desarrollado por Juan Pablo Caamaño Valdés")
+    st.caption("#Desarrollado por Juan Pablo Caamaño Valdés")
     st.divider()
 
 # --- 3. DEFINICIÓN DE TUS HERRAMIENTAS ---
@@ -36,28 +36,45 @@ pg = st.navigation({
     "NEGOCIACIÓN": [p_negociador]
 })
 
-# --- 5. ESTILOS (CORREGIDOS PARA QUE APAREZCA EL MENÚ) ---
+# --- 5. ESTILOS (El Camuflaje Perfecto) ---
 st.markdown("""
     <style>
-    /* 1. Ocultar menú de los 3 puntos y pie de página */
+    /* 1. Ocultar Menú hamburguesa y Footer */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     
-    /* 2. ELIMINAMOS LA ORDEN DE OCULTAR EL HEADER COMPLETO 
-       (Esto permite que veas la flecha '>' si el menú se cierra) */
-    
-    /* 3. BLOQUEAR EL BOTÓN DE CERRAR (La 'X' dentro del menú) */
+    /* 2. OCULTAR LA BARRA DE HERRAMIENTAS SUPERIOR (Donde sale 'Deploy' y los 3 puntos) */
+    [data-testid="stToolbar"] {
+        visibility: hidden;
+        display: none;
+    }
+
+    /* 3. OCULTAR LA DECORACIÓN DE COLORES (La línea arcoíris arriba del todo) */
+    [data-testid="stDecoration"] {
+        visibility: hidden;
+        display: none;
+    }
+
+    /* 4. HACER EL ENCABEZADO TRANSPARENTE 
+       (Esto permite que no se vea la barra blanca, pero mantiene la estructura) */
+    header[data-testid="stHeader"] {
+        background-color: transparent;
+    }
+
+    /* 5. BLOQUEAR EL BOTÓN DE CERRAR BARRA LATERAL 
+       (Para que el usuario no pueda cerrarla accidentalmente) */
     [data-testid="stSidebarCollapseButton"] {
         display: none;
     }
 
-    /* 4. Alinear contenido */
+    /* 6. SUBIR EL CONTENIDO 
+       (Como ocultamos la barra, subimos el texto para aprovechar el espacio) */
     .block-container {
-        padding-top: 2rem !important;
+        padding-top: 1rem !important;
         padding-bottom: 2rem !important;
     }
 
-    /* 5. Títulos del menú siempre visibles */
+    /* 7. ESTILOS DEL MENÚ LATERAL */
     div[data-testid="stSidebarNav"] span {
         visibility: visible !important;
         font-size: 14px;
