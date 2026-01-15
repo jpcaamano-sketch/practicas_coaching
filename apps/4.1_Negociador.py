@@ -4,24 +4,8 @@ from docx import Document
 import io
 
 # --- 1. CONFIGURACIÓN ---
-# Nota: Si este archivo se ejecuta desde Inicio.py, esta línea podría ser ignorada,
-# pero se deja por si se ejecuta de forma independiente.
-# Si te da error de "set_page_config", bórrala o coméntala.
+# Nota: Si este archivo se ejecuta desde Inicio.py, esta línea podría ser ignorada.
 # st.set_page_config(page_title="Negociador Método Harvard", page_icon="🤝", layout="centered")
-
-#st.markdown("""
-#    <style>
-#    /* Estilos personalizados de la app */
-#    .big-font { font-size: 18px !important; }
-#    .stTextArea textarea { font-size: 16px; }
-#    .highlight { background-color: #f0f2f6; padding: 15px; border-radius: 10px; border-left: 5px solid #ff4b4b; }
-#    
-#    /* --- OCULTAR ELEMENTOS DE LA INTERFAZ DE STREAMLIT --- */
-#    #MainMenu {visibility: hidden;} /* Oculta el menú de hamburguesa */
-#    header {visibility: hidden;}    /* Oculta la barra superior */
-#    footer {visibility: hidden;}    /* Oculta el pie de página "Made with Streamlit" */
-#    </style>
- #   """, unsafe_allow_html=True)
 
 # --- 2. CONEXIÓN IA ---
 try:
@@ -34,7 +18,8 @@ except Exception:
 # --- 3. LÓGICA HARVARD ---
 def analizar_negociacion(rol, contraparte, problema, intereses_mios, intereses_ellos, maan):
     try:
-        model = genai.GenerativeModel("gemini-2.5-flah”")
+        # CORRECCIÓN: Usamos el modelo correcto
+        model = genai.GenerativeModel("models/gemini-2.5-flash")
         
         prompt = f"""
         Actúa como un Experto en Negociación del 'Harvard Negotiation Project' (Fisher & Ury).
@@ -74,6 +59,7 @@ def analizar_negociacion(rol, contraparte, problema, intereses_mios, intereses_e
     except Exception as e:
         return f"Error: {str(e)}"
 
+# --- ESTA ES LA FUNCIÓN QUE FALTABA ---
 def crear_docx(texto):
     doc = Document()
     doc.add_heading('Plan de Negociación Harvard', 0)
@@ -81,6 +67,7 @@ def crear_docx(texto):
     # Limpieza básica para el Word
     lines = texto.split('\n')
     for line in lines:
+        # Detectamos si es un título para darle formato
         if "DIAGNÓSTICO" in line or "ESTRATEGIA" in line or "PREGUNTAS" in line:
             doc.add_heading(line.replace('*', ''), level=1)
         else:
@@ -120,6 +107,10 @@ st.header("Tu Poder (MAAN)")
 st.caption("MAAN = Mejor Alternativa al Acuerdo Negociado. Es tu Plan B real.")
 maan = st.text_input("Si NO llegas a un acuerdo, ¿qué harás?", placeholder="Ej: Tengo otra oferta lista de la empresa X / Me quedo sin cliente.")
 
+# Inicializar estado
+if 'resultado_negociacion' not in st.session_state:
+    st.session_state.resultado_negociacion = None
+
 if st.button("🧠 Generar Estrategias", type="primary"):
     if not intereses_mios or not maan:
         st.warning("⚠️ Para Harvard, es crucial definir tus Intereses y tu MAAN.")
@@ -129,7 +120,7 @@ if st.button("🧠 Generar Estrategias", type="primary"):
             st.session_state.resultado_negociacion = estrategia
 
 # --- 5. RESULTADOS ---
-if 'resultado_negociacion' in st.session_state:
+if st.session_state.resultado_negociacion:
     res = st.session_state.resultado_negociacion
     
     st.divider()

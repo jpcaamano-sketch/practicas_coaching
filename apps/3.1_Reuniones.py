@@ -4,27 +4,12 @@ from fpdf import FPDF
 from docx import Document
 import pandas as pd
 import io
-import re
 import json
+import re
 
 # --- 1. CONFIGURACIÓN DE PÁGINA ---
-# Nota: Si este archivo se ejecuta desde Inicio.py, esta línea podría ser ignorada,
-# pero se deja por si se ejecuta de forma independiente.
-# Si te da error de "set_page_config", bórrala o coméntala.
-# st.set_page_config(page_title="Planificador de Reuniones", page_icon="📅", layout="centered")
-
-#st.markdown("""
-#    <style>
-#    /* Estilos de Botones y Contenedor */
-#    .stButton>button { width: 100%; border-radius: 5px; height: 3em; font-weight: bold;}
-#    .block-container { padding-top: 2rem; }
-#    
-#    /* --- OCULTAR ELEMENTOS DE LA INTERFAZ DE STREAMLIT --- */
-#    #MainMenu {visibility: hidden;} /* Oculta el menú de hamburguesa */
-#    header {visibility: hidden;}    /* Oculta la barra superior */
-#    footer {visibility: hidden;}    /* Oculta el pie de página "Made with Streamlit" */
-#    </style>
-#    """, unsafe_allow_html=True)
+# (Opcional, si da error puedes comentarla)
+# st.set_page_config(page_title="Planificador de Reuniones", page_icon="📅")
 
 # --- 2. CONEXIÓN CON LA IA ---
 try:
@@ -37,7 +22,8 @@ except Exception:
 # --- 3. FUNCIONES LÓGICAS ---
 def generar_planificacion(tema, objetivo, duracion):
     try:
-        model = genai.GenerativeModel("gemini-2.5-flah”")
+        # CORRECCIÓN: Usamos el modelo correcto "gemini-1.5-flash"
+        model = genai.GenerativeModel("models/gemini-2.5-flash")
         
         prompt = f"""
         Actúa como un Facilitador Experto. Diseña una agenda para una reunión de {duracion} minutos.
@@ -47,10 +33,10 @@ def generar_planificacion(tema, objetivo, duracion):
         Estructura:
         {{
             "agenda": [
-                {{"minutos": "00-05", "actividad": "...", "responsable": "..."}},
+                {{"minutos": "00-05", "actividad": "Actividad breve", "responsable": "Rol o Nombre"}},
                 {{"minutos": "...", "actividad": "...", "responsable": "..."}}
             ],
-            "consejos": "Consejo 1... Consejo 2..."
+            "consejos": "Consejo práctico 1... Consejo práctico 2..."
         }}
         """
         response = model.generate_content(prompt)
@@ -60,11 +46,19 @@ def generar_planificacion(tema, objetivo, duracion):
 
 def procesar_respuesta(texto_completo):
     try:
+        # Limpieza robusta: Busca el primer "{" y el último "}" para aislar el JSON
         texto_limpio = texto_completo.replace("```json", "").replace("```", "").strip()
+        
+        # Si la IA puso texto antes o después, lo recortamos
+        inicio = texto_limpio.find("{")
+        fin = texto_limpio.rfind("}") + 1
+        if inicio != -1 and fin != 0:
+            texto_limpio = texto_limpio[inicio:fin]
+
         datos = json.loads(texto_limpio)
-        return datos["agenda"], datos["consejos"]
+        return datos.get("agenda", []), datos.get("consejos", "Sin consejos")
     except Exception as e:
-        return None, f"Error al procesar datos. ({e})"
+        return None, f"Error interpretando la respuesta de la IA. Intenta de nuevo. ({e})"
 
 # --- 4. FUNCIONES DE EXPORTACIÓN ---
 
@@ -83,9 +77,9 @@ def crear_word(tema, objetivo, agenda_lista, consejos):
     
     for item in agenda_lista:
         row = table.add_row().cells
-        row[0].text = item.get("minutos", "")
-        row[1].text = item.get("actividad", "")
-        row[2].text = item.get("responsable", "")
+        row[0].text = str(item.get("minutos", ""))
+        row[1].text = str(item.get("actividad", ""))
+        row[2].text = str(item.get("responsable", ""))
     
     doc.add_heading('Consejos', level=1)
     doc.add_paragraph(consejos)
@@ -114,14 +108,16 @@ def crear_pdf(tema, objetivo, agenda_lista, consejos):
     
     # Tabla
     pdf.set_fill_color(240, 240, 240)
+    pdf.set_font("Arial", 'B', 10)
     pdf.cell(30, 10, "Minutos", 1, 0, 'C', 1)
     pdf.cell(110, 10, "Actividad", 1, 0, 'C', 1)
     pdf.cell(50, 10, "Responsable", 1, 1, 'C', 1)
     
+    pdf.set_font("Arial", '', 10)
     for item in agenda_lista:
-        pdf.cell(30, 10, L(item.get("minutos", "")), 1)
-        pdf.cell(110, 10, L(item.get("actividad", "")), 1)
-        pdf.cell(50, 10, L(item.get("responsable", "")), 1, 1)
+        pdf.cell(30, 10, L(str(item.get("minutos", ""))), 1)
+        pdf.cell(110, 10, L(str(item.get("actividad", ""))), 1)
+        pdf.cell(50, 10, L(str(item.get("responsable", ""))), 1, 1)
         
     pdf.ln(5)
     pdf.set_font("Arial", 'B', 12)
@@ -140,11 +136,11 @@ def crear_excel(tema, objetivo, agenda_lista, consejos):
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Agenda')
         
-        # Guardamos los consejos y objetivos en otra hoja para no ensuciar la tabla
+        # Guardamos los consejos y objetivos en otra hoja
         info_extra = pd.DataFrame([
-            {"Tipo": "Tema", "Contenido": tema},
-            {"Tipo": "Objetivo", "Contenido": objetivo},
-            {"Tipo": "Consejos", "Contenido": consejos}
+            {"Dato": "Tema", "Valor": tema},
+            {"Dato": "Objetivo", "Valor": objetivo},
+            {"Dato": "Consejos", "Valor": consejos}
         ])
         info_extra.to_excel(writer, index=False, sheet_name='Detalles')
         
@@ -166,7 +162,7 @@ if 'resultado_agenda' not in st.session_state:
     st.session_state.resultado_agenda = None
     st.session_state.consejos_agenda = None
 
-if st.button("⚡ Generar Planificación", type="primary"):
+if st.button("⚡ Generar Planificación", type="primary", use_container_width=True):
     if not tema_input or not obj_input:
         st.warning("⚠️ Completa los campos.")
     else:
@@ -183,7 +179,8 @@ if st.button("⚡ Generar Planificación", type="primary"):
 # RESULTADOS Y DESCARGA
 if st.session_state.resultado_agenda:
     st.subheader("📋 Tu Agenda")
-    st.table(st.session_state.resultado_agenda)
+    # Convertimos a DataFrame para mostrarlo bonito en pantalla
+    st.table(pd.DataFrame(st.session_state.resultado_agenda))
     st.info(f"**💡 Tips:** {st.session_state.consejos_agenda}")
     
     st.divider()
@@ -198,25 +195,29 @@ if st.session_state.resultado_agenda:
     with c_tipo:
         tipo_archivo = st.radio("Formato:", ["Word", "PDF", "Excel"], horizontal=True)
     
-    # Lógica de generación según selección
-    archivo_data = None
-    mime_type = ""
-    ext = ""
-    
-    if tipo_archivo == "Word":
-        archivo_data, mime_type = crear_word(tema_input, obj_input, st.session_state.resultado_agenda, st.session_state.consejos_agenda)
-        ext = "docx"
-    elif tipo_archivo == "PDF":
-        archivo_data, mime_type = crear_pdf(tema_input, obj_input, st.session_state.resultado_agenda, st.session_state.consejos_agenda)
-        ext = "pdf"
-    elif tipo_archivo == "Excel":
-        archivo_data, mime_type = crear_excel(tema_input, obj_input, st.session_state.resultado_agenda, st.session_state.consejos_agenda)
-        ext = "xlsx"
+    # Botón de descarga
+    if st.button("💾 Descargar ahora"):
+        archivo_data = None
+        mime_type = ""
+        ext = ""
         
-    st.download_button(
-        label=f"💾 Descargar en {tipo_archivo}",
-        data=archivo_data,
-        file_name=f"{nombre_archivo}.{ext}",
-        mime=mime_type,
-        use_container_width=True
-    )
+        try:
+            if tipo_archivo == "Word":
+                archivo_data, mime_type = crear_word(tema_input, obj_input, st.session_state.resultado_agenda, st.session_state.consejos_agenda)
+                ext = "docx"
+            elif tipo_archivo == "PDF":
+                archivo_data, mime_type = crear_pdf(tema_input, obj_input, st.session_state.resultado_agenda, st.session_state.consejos_agenda)
+                ext = "pdf"
+            elif tipo_archivo == "Excel":
+                archivo_data, mime_type = crear_excel(tema_input, obj_input, st.session_state.resultado_agenda, st.session_state.consejos_agenda)
+                ext = "xlsx"
+                
+            st.download_button(
+                label=f"Confirmar descarga {ext}",
+                data=archivo_data,
+                file_name=f"{nombre_archivo}.{ext}",
+                mime=mime_type,
+                use_container_width=True
+            )
+        except Exception as e:
+            st.error(f"Error generando el archivo: {e}")

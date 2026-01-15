@@ -29,13 +29,21 @@ except Exception:
     st.stop()
 
 # --- 2. LÓGICA IA (Robusta con Separadores) ---
+# --- 2. LÓGICA IA (Robusta con Separadores) ---
 def generar_opciones(texto, destinatario):
     try:
-        model = genai.GenerativeModel("models/gemma-3-1b-it")
+        # Nota: Si "gemma-3-1b-it" te da error, cambia a "gemini-1.5-flash"
+        model = genai.GenerativeModel("models/gemini-2.5-flash") 
         separador = "|||"
         
+        # CORRECCIÓN: Ahora incluimos la variable {texto} explícitamente
         prompt = f"""
-        Actúa como experto en comunicación. Reescribe el mensaje para: "{destinatario}".
+        Actúa como experto en comunicación asertiva.
+        
+        MENSAJE ORIGINAL A REESCRIBIR: "{texto}"
+        
+        OBJETIVO: Reescribe el mensaje anterior para un destinatario: "{destinatario}".
+        
         Genera 3 versiones. Sigue este formato ESTRICTAMENTE usando el separador "{separador}":
         
         Versión Profesional:
