@@ -1,9 +1,21 @@
 import streamlit as st
 
-# --- 1. CONFIGURACIÓN DEL JEFE (Va primero que todo) ---
-st.set_page_config(page_title="Herramientas de Coaching", layout="centered")
+# --- 1. CONFIGURACIÓN INICIAL (Modificada) ---
+# initial_sidebar_state="expanded" fuerza a que arranque abierta.
+st.set_page_config(
+    page_title="Herramientas de Coaching", 
+    layout="centered", 
+    initial_sidebar_state="expanded"
+)
 
-# --- 2. DEFINICIÓN DE TUS HERRAMIENTAS ---
+# --- 2. PERSONALIZACIÓN BARRA LATERAL (Nuevo) ---
+# Esto coloca el Título y tu Nombre en la parte superior de la barra
+with st.sidebar:
+    st.title("Prácticas de Coaching")
+    st.caption("Desarrollado por Juan Pablo Caamaño Valdés")
+    st.divider() # Una línea separadora elegante
+
+# --- 3. DEFINICIÓN DE TUS HERRAMIENTAS ---
 # Rutas a tus archivos en la carpeta apps
 
 # Comunicación
@@ -20,8 +32,7 @@ p_priorizador = st.Page("apps/3.2_Priorizador.py", title="Priorizados de Tareas"
 # Resolución de Conflictos
 p_negociador = st.Page("apps/4.1_Negociador.py", title="Negociador Harvard", icon="☮️")
 
-# --- 3. CREACIÓN DEL MENÚ DE NAVEGACIÓN ---
-# Al agruparlas así, los títulos ("📢 Comunicación", etc.) deben aparecer fijos.
+# --- 4. CREACIÓN DEL MENÚ DE NAVEGACIÓN ---
 pg = st.navigation({
     "COMUNICACIÓN": [p_pedidos, p_correos],
     "LIDERAZGO": [p_delegacion],
@@ -29,29 +40,35 @@ pg = st.navigation({
     "NEGOCIACIÓN": [p_negociador]
 })
 
-# --- 4. ESTILOS LIMPIOS (CSS Global) ---
+# --- 5. ESTILOS LIMPIOS (CSS Global + Bloqueo de Barra) ---
 st.markdown("""
     <style>
-    /* 1. Ocultar elementos innecesarios */
+    /* 1. Ocultar elementos innecesarios del sistema */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header[data-testid="stHeader"] {visibility: hidden;}
 
-    /* 2. Alinear todas las páginas arriba (evita saltos) */
+    /* 2. BLOQUEAR LA BARRA LATERAL (Truco CSS) */
+    /* Esto oculta la flecha "X" para cerrar la barra, haciéndola fija */
+    [data-testid="stSidebarCollapseButton"] {
+        display: none;
+    }
+
+    /* 3. Alinear todas las páginas arriba */
     .block-container {
         padding-top: 2rem !important;
         padding-bottom: 2rem !important;
     }
 
-    /* 3. Forzar que los títulos de categorías sean visibles siempre */
+    /* 4. Estilo de los títulos de categorías en el menú */
     div[data-testid="stSidebarNav"] span {
         visibility: visible !important;
         font-size: 14px;
         font-weight: 600;
-        color: #444; /* Color gris oscuro profesional */
+        color: #444; 
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 5. EJECUTAR LA APP SELECCIONADA ---
+# --- 6. EJECUTAR LA APP SELECCIONADA ---
 pg.run()
